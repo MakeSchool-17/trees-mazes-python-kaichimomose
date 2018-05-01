@@ -35,7 +35,7 @@ def create_dfs(m):
     # set state to 'solve'
     m.state = 'solve'
 
-
+    
 def main():
     current_maze = maze.Maze('create')
     create_dfs(current_maze)
