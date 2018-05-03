@@ -74,6 +74,12 @@ class Maze:
                     if not (self.maze_array[new_cell] & WALL_BITS):
                         # add (new cell index, COMPASS index of direction) to neighbors
                         neighbors.append((new_cell, i))
+                # if state is solve and no wall between cell and new cell
+                elif self.state == 'solve':
+                    if (self.maze_array[cell] & WALLS[i]):
+                        if not (self.maze_array[new_cell] &
+                                (BACKTRACK_BITS | SOLUTION_BITS)):
+                            neighbors.append((new_cell, i))
         return neighbors
 
     # Connect two cells by knocking down the wall between them
@@ -90,24 +96,51 @@ class Maze:
     # Update solution bits of from_cell and backtrack bits of to_cell
     def visit_cell(self, from_cell, to_cell, compass_index):
         # TODO: Logic for updating cell bits
+        # self.draw_visited_cell(from_cell)
+        self.maze_array[from_cell] &= ~SOLUTION_BITS
+        self.maze_array[from_cell] |= (WALLS[compass_index] << 8)
+        self.maze_array[to_cell] |= (OPPOSITE_WALLS[compass_index] << 12)
         self.draw_visited_cell(from_cell)
 
     # Backtrack from cell
     # Blank out the solution bits so it is no longer on the solution path
     def backtrack(self, cell):
         # TODO: Logic for updating cell bits
+        # self.draw_backtracked_cell(cell)
+        self.maze_array[cell] &= ~SOLUTION_BITS
         self.draw_backtracked_cell(cell)
 
     # Visit cell in BFS search
     # Update backtrack bits for use in reconstruct_solution
     def bfs_visit_cell(self, cell, from_compass_index):
         # TODO: Logic for updating cell bits
+        self.maze_array[cell] |= (OPPOSITE_WALLS[from_compass_index] << 12)
         self.draw_bfs_visited_cell(cell)
 
     # Reconstruct path to start using backtrack bits
     def reconstruct_solution(self, cell):
-        self.draw_visited_cell(cell)
         # TODO: Logic for reconstructing solution path in BFS
+        # draw cell as part of solution path with draw_visited_cell
+        self.draw_visited_cell(cell)
+        # isolate the four backtrack bits to previous cell bits
+        previous_cell = (self.maze_array[cell] & BACKTRACK_BITS) >> 12
+        # set i to index of previous cell bits in WALLS
+        try:
+            i = WALLS.index(previous_cell)
+        except ValueError:
+            print('ERROR - BACKTRACK BITS INVALID!')
+        x, y = self.x_y(cell)
+        # use i to calculate index of previous cell, set to previous cell
+        prev_x = x + COMPASS[i][0]
+        prev_y = y + COMPASS[i][1]
+        # update solution bits of previous cell to point towards cell
+        prev_cell = self.cell_index(prev_x, prev_y)
+        self.maze_array[prev_cell] |= (OPPOSITE_WALLS[i] << 8)
+        # call refresh_maze_view to update visualization
+        self.refresh_maze_view()
+        # if previous cell not start cell, reconstruct_solution(previous cell)
+        if prev_cell != 0:
+            self.reconstruct_solution(prev_cell)
 
     # Check if x, y values of cell are within bounds of maze
     def cell_in_bounds(self, x, y):
