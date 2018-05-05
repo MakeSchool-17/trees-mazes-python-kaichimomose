@@ -55,29 +55,31 @@ def solve_bfs(m):
     # set visited cells to 0
     visited_cell = 0
     # enqueue (current cell, in direction)
-    queue.apped((current_cell, direction))
+    queue.append((current_cell, direction))
 
     # while current cell not goal and queue not empty
     while current_cell != m.total_cells - 1 and queue != []:
         # dequeue to current cell, in direction
         current_cell, direction = queue.pop(0)
         # visit current cell with bfs_visit_cell
+        m.bfs_visit_cell(current_cell, direction)
         # add 1 to visited cells
+        visited_cell += 1
         # call refresh_maze_view to update visualization
-
+        m.refresh_maze_view()
         # get unvisited neighbors of current cell using cell_neighbors, add to queue
-
+        queue.extend(m.cell_neighbors(current_cell))
     # trace solution path and update cells with solution data using reconstruct_solution
-
+    m.reconstruct_solution(current_cell)
     # set state to 'idle'
-
+    m.state = 'idle'
 
 def print_solution_array(m):
     solution = m.solution_array()
     print('Solution ({} steps): {}'.format(len(solution), solution))
 
 
-def main(solver='dfs'):
+def main(solver='bfs'):
     current_maze = maze.Maze('create')
     generate_maze.create_dfs(current_maze)
     if solver == 'dfs':
